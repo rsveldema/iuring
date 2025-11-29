@@ -14,11 +14,11 @@
             "cwd": "${workspaceFolder}/out/build/Debugging"
         },
         {
-            "name": "(gdb) flexaudio",
+            "name": "(gdb) iouring-echo",
             "type": "cppdbg",
             "request": "launch",
-            "program": "enter program name, for example ${workspaceFolder}/a.out",
-            "args": [],
+            "program": "${workspaceFolder}/out/build/Debugging/io_uring_interface",
+            "args": ["--no-tune", "--ping", "142.250.184.238"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],

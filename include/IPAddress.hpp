@@ -96,7 +96,6 @@ public:
     std::string to_human_readable_string() const;
     std::string to_human_readable_ip_string() const;
 
-
     const void* data_sockaddr() const
     {
         if (auto* a = get_ipv4())
@@ -206,5 +205,6 @@ private:
     std::optional<sockaddr_in> m_in4;
     std::optional<sockaddr_in6> m_in6;
 };
+
 
 } // namespace network

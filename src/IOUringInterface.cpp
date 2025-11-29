@@ -51,6 +51,8 @@ void IOUringInterface::tune()
 
 bool IOUringInterface::try_get_interface_ip()
 {
+    assert(get_interface_name() != "");
+
     bool success = false;
     ifaddrs* ifaddr = nullptr;
     if (getifaddrs(&ifaddr) == -1)

@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.18)
 project(io_uring_interface_suite CXX)
 
 add_library(io_uring_interface_lib
+    src/WorkPool.cpp
+    src/WorkItem.cpp
+    src/SocketImpl.cpp
     src/IOUring.cpp
     src/IOUringInterface.cpp
     src/StringUtils.cpp

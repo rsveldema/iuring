@@ -11,10 +11,10 @@ static constexpr size_t DEFAULT_QUEUE_SIZE = 64;
 
 namespace network
 {
-class IOUring : public IOUringInterface
+class IOUring : public IOUringInterface, public std::enable_shared_from_this<IOUring>
 {
 public:
-    IOUring(Logger& logger, size_t queue_size = DEFAULT_QUEUE_SIZE);
+    IOUring(Logger& logger, const std::string& interface_name, bool tune, size_t queue_size = DEFAULT_QUEUE_SIZE);
     ~IOUring();
 
     IOUring(const IOUring&) = delete;
@@ -23,12 +23,10 @@ public:
     IOUring& operator=(IOUring&&) = delete;
 
     Error init() override;
-    Error submit_connect() override;
-    Error submit_accept() override;
-    Error submit_read() override;
-    Error submit_write() override;
     Error poll_completion_queues() override;
 
+    void submit_connect(const std::shared_ptr<ISocket>& socket, const IPAddress& target) override;
+    void submit_all_requests() override;
 
 private:
     static constexpr auto QD = 64;
@@ -61,5 +59,29 @@ private:
         return buffer_base + (idx << buf_shift);
     }
 
+    void recycle_buffer(int idx);
+
+    void re_submit(WorkItem& item) override;
+
+    void send_packet(const std::shared_ptr<WorkItem>& work_item);
+
+    void call_callback_and_free_work_item_id(io_uring_cqe* cqe);
+
+    io_uring_sqe* get_sqe();
+
+    void call_send_callback(
+        std::shared_ptr<WorkItem> work_item, io_uring_cqe* cqe);
+
+    ReceivePostAction call_recv_handler_stream(const uint8_t* buffer,
+        std::shared_ptr<WorkItem> work_item, io_uring_cqe* cqe);
+
+    ReceivePostAction call_recv_handler_datagram(const uint8_t* buffer,
+        std::shared_ptr<WorkItem> work_item, io_uring_cqe* cqe);
+
+    ReceivePostAction call_recv_callback(
+        std::shared_ptr<WorkItem> work_item, io_uring_cqe* cqe);
+
+    void call_accept_callback(
+        std::shared_ptr<WorkItem> work_item, io_uring_cqe* cqe);
 };
 } // namespace network
