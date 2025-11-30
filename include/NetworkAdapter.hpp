@@ -1,14 +1,13 @@
 #pragma once
 
-#include <Logger.hpp>
-#include <Error.hpp>
-
 #include <string>
 #include <optional>
 
+#include "Logger.hpp"
+#include "MacAddress.hpp"
+
 namespace network
 {
-
 class NetworkAdapter
 {
 public:
@@ -18,7 +17,7 @@ public:
     , m_tune(tune)
     {}
 
-    Error init();
+    void init();
 
     void tune();
 
@@ -39,28 +38,27 @@ public:
         return m_interface_name;
     }
 
-    bool try_get_interface_ip();
-    bool retrieve_interface_ip();
+   std::optional<MacAddress> get_my_mac_address();
 
-
-    std::string get_my_mac_address();
-
-    const std::string get_interface_ip4() const{
+    const std::optional<std::string> get_interface_ip4() const{
         return m_interface_ip4;
     }
 
-    const std::string get_interface_ip6() const{
+    const std::optional<std::string> get_interface_ip6() const{
         return m_interface_ip6;
     }
 
 private:
     Logger& m_logger;
 
-    std::string m_interface_ip4;
-    std::string m_interface_ip6;
+    std::optional<std::string> m_interface_ip4;
+    std::optional<std::string> m_interface_ip6;
     std::string m_interface_name;
     bool m_tune = true;
-    std::optional<std::string> mac_opt;
+    std::optional<MacAddress> mac_opt;
+
+    bool try_get_interface_ip();
+    void retrieve_interface_ip();
 
     Logger& get_logger()
     {

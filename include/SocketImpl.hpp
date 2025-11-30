@@ -26,11 +26,15 @@ class AcceptResult;
 
 class SocketImpl : public ISocket
 {
-public:
+private:
     SocketImpl(Logger& logger, const AcceptResult& new_conn);
 
     SocketImpl(
         SocketType type, SocketPortID port, Logger& logger, SocketKind kind);
+
+public:
+    static std::shared_ptr<SocketImpl> create(Logger& logger, const AcceptResult& new_conn);
+    static std::shared_ptr<SocketImpl> create(SocketType type, SocketPortID port, Logger& logger, SocketKind kind);
 
     void dump_info();
 

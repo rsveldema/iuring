@@ -57,7 +57,7 @@ public:
     {
     }
 
-    explicit IPAddress(const sockaddr_storage& sa, socklen_t len)
+    IPAddress(const sockaddr_storage& sa, socklen_t len)
         : m_in4(len == sizeof(sockaddr_in) ?
                   std::nullopt :
                   std::optional<sockaddr_in>(*(sockaddr_in*) &sa))

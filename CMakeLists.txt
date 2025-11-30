@@ -18,9 +18,13 @@ target_link_libraries(io_uring_interface_lib -luring ${UUID_LIBRARIES})
 target_include_directories(io_uring_interface_lib PUBLIC include PUBLIC ${PROJECT_BINARY_DIR})
 set_property(TARGET io_uring_interface_lib PROPERTY CXX_STANDARD 20)
 
-add_executable(io_uring_interface src/main.cpp)
-set_property(TARGET io_uring_interface PROPERTY CXX_STANDARD 20)
-target_link_libraries(io_uring_interface io_uring_interface_lib)
+add_executable(ping src/ping.cpp)
+set_property(TARGET ping PROPERTY CXX_STANDARD 20)
+target_link_libraries(ping io_uring_interface_lib)
+
+add_executable(echo_server src/echo_server.cpp)
+set_property(TARGET echo_server PROPERTY CXX_STANDARD 20)
+target_link_libraries(echo_server io_uring_interface_lib)
 
 find_package(GTest)
 

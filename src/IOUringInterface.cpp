@@ -25,11 +25,10 @@ Error errno_to_error(int err)
     return Error::UNKNOWN;
 }
 
-Error NetworkAdapter::init()
+void NetworkAdapter::init()
 {
     retrieve_interface_ip();
     tune();
-    return Error::OK;
 }
 
 
@@ -104,20 +103,20 @@ bool NetworkAdapter::try_get_interface_ip()
     return success;
 }
 
-bool NetworkAdapter::retrieve_interface_ip()
+
+void NetworkAdapter::retrieve_interface_ip()
 {
     // try_get_interface_ip();
     // set_interface_ip4("192.168.1.130");
 
-    while (get_interface_ip4() == "")
+    while (! get_interface_ip4().has_value())
     {
         try_get_interface_ip();
         std::this_thread::sleep_for(1s);
     }
-    return true;
 }
 
-std::string NetworkAdapter::get_my_mac_address()
+std::optional<MacAddress> NetworkAdapter::get_my_mac_address()
 {
     if (mac_opt)
     {
@@ -133,7 +132,7 @@ std::string NetworkAdapter::get_my_mac_address()
     {
         fprintf(stderr, "failed to open %s\n", buffer.data());
         abort();
-        return "";
+        return std::nullopt;
     }
     buffer.fill(0);
 
@@ -148,7 +147,7 @@ std::string NetworkAdapter::get_my_mac_address()
     }
     assert(num_bytes_read > 0);
     fclose(f);
-    mac_opt = StringUtils::trim(buffer.data());
+    mac_opt = MacAddress{ StringUtils::trim(buffer.data()) };
     return *mac_opt;
 }
 

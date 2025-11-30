@@ -13,6 +13,35 @@
 
 namespace network
 {
+std::shared_ptr<SocketImpl> SocketImpl::create(
+    Logger& logger, const AcceptResult& new_conn)
+{
+    class EnableShared : public SocketImpl
+    {
+    public:
+        EnableShared(Logger& logger, const AcceptResult& new_conn)
+            : SocketImpl(logger, new_conn)
+        {
+        }
+    };
+    return std::make_shared<EnableShared>(logger, new_conn);
+}
+
+std::shared_ptr<SocketImpl> SocketImpl::create(
+    SocketType type, SocketPortID port, Logger& logger, SocketKind kind)
+{
+    class EnableShared : public SocketImpl
+    {
+    public:
+        EnableShared(
+            SocketType type, SocketPortID port, Logger& logger, SocketKind kind)
+            : SocketImpl(type, port, logger, kind)
+        {
+        }
+    };
+    return std::make_shared<EnableShared>(type, port, logger, kind);
+}
+
 
 SocketImpl::SocketImpl(Logger& logger, const AcceptResult& new_conn)
     : ISocket(network::get_type(new_conn), network::get_port(new_conn), logger,

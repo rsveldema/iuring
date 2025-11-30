@@ -6,6 +6,7 @@
 #include <thread>
 
 #include <SocketImpl.hpp>
+#include <WorkItem.hpp>
 
 namespace network
 {
@@ -217,8 +218,9 @@ io_uring_sqe* IOUring::get_sqe()
 }
 
 
-void IOUring::submit(WorkItem& item)
+void IOUring::submit(IWorkItem& _item)
 {
+    auto& item = dynamic_cast<WorkItem&>(_item);
     auto* sqe = get_sqe();
     io_uring_sqe_set_data(sqe, (void*) item.m_id);
 
@@ -695,7 +697,7 @@ void IOUring::submit_recv(
         socket, shared_from_this(), handler, "read-from-socket");
 }
 
-std::shared_ptr<WorkItem> IOUring::submit_send(
+std::shared_ptr<IWorkItem> IOUring::submit_send(
     const std::shared_ptr<ISocket>& socket)
 {
     assert(m_initialized);

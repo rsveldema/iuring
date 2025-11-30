@@ -1,15 +1,17 @@
 #pragma once
 
-#include <map>
+#include <memory>
 
-#include "IPAddress.hpp"
 #include "Logger.hpp"
-#include "UringDefs.hpp"
-#include "WorkPool.hpp"
+#include "MacAddress.hpp"
+#include "IPAddress.hpp"
+#include "ISocket.hpp"
+#include "Error.hpp"
+#include "IWorkItem.hpp"
+#include "CompletionCallbacks.hpp"
 
 namespace network
 {
-
 class IOUringInterface
 {
 public:
@@ -17,7 +19,7 @@ public:
 
     virtual Error init() = 0;
 
-    virtual std::string get_my_mac_address() = 0;
+    virtual std::optional<MacAddress> get_my_mac_address() = 0;
 
     virtual Error poll_completion_queues() = 0;
 
@@ -43,13 +45,13 @@ public:
      *      - Then you call submit on the work-item.
      *      - The WorkItem::submit() method then has the callback arg.
      */
-    virtual std::shared_ptr<WorkItem> submit_send(
+    virtual std::shared_ptr<IWorkItem> submit_send(
         const std::shared_ptr<ISocket>& socket) = 0;
 
     /** used to submit the submit_sent returned
      * work item.
      */
-    virtual void submit(WorkItem& item) = 0;
+    virtual void submit(IWorkItem& item) = 0;
 
     virtual void submit_close(const std::shared_ptr<ISocket>& socket,
         close_callback_func_t handler) = 0;

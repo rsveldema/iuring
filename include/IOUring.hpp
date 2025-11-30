@@ -6,6 +6,8 @@
 #include "NetworkAdapter.hpp"
 
 #include "IOUringInterface.hpp"
+#include "WorkPool.hpp"
+
 #include <liburing.h>
 
 static constexpr size_t DEFAULT_QUEUE_SIZE = 64;
@@ -26,10 +28,12 @@ public:
     static std::shared_ptr<IOUring> create(Logger& logger, NetworkAdapter& adapter, size_t queue_size = DEFAULT_QUEUE_SIZE);
 
     ~IOUring();
+
     Error init() override;
+
     Error poll_completion_queues() override;
 
-    std::shared_ptr<WorkItem> submit_send(const std::shared_ptr<ISocket>& socket) override;
+    std::shared_ptr<IWorkItem> submit_send(const std::shared_ptr<ISocket>& socket) override;
 
     void submit_connect(const std::shared_ptr<ISocket>& socket, const IPAddress& target,
         connect_callback_func_t handler) override;
@@ -46,7 +50,7 @@ public:
 
     /** @returns aa:bb:cc:dd:ee:ff
      */
-    std::string get_my_mac_address() override
+    std::optional<MacAddress> get_my_mac_address() override
     {
         return m_adapter.get_my_mac_address();
     }
@@ -103,7 +107,7 @@ private:
 
     void recycle_buffer(int idx);
 
-    void submit(WorkItem& item) override;
+    void submit(IWorkItem& item) override;
 
     void send_packet(const std::shared_ptr<WorkItem>& work_item);
 

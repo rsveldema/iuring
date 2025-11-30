@@ -1,4 +1,5 @@
 #include <IOUringInterface.hpp>
+#include <WorkItem.hpp>
 
 namespace network
 {

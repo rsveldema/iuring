@@ -24,48 +24,17 @@
 #include <SendPacket.hpp>
 #include <UringDefs.hpp>
 
+#include "IWorkItem.hpp"
+
 namespace network
 {
-
-enum class [[nodiscard]] ReceivePostAction{ NONE, RE_SUBMIT };
-
-struct AcceptResult
-{
-    int m_new_fd;
-    IPAddress m_address;
-};
-
-struct SendResult
-{
-    int status;
-};
-
-struct ConnectResult
-{
-    int status;
-    IPAddress m_address;
-};
-
-struct CloseResult
-{
-    int status;
-};
-
-using recv_callback_func_t =
-    std::function<ReceivePostAction(const ReceivedMessage& msg)>;
-using send_callback_func_t = std::function<void(const SendResult&)>;
-using accept_callback_func_t =
-    std::function<void(const AcceptResult& new_conn)>;
-using connect_callback_func_t =
-    std::function<void(const ConnectResult& result)>;
-using close_callback_func_t = std::function<void(const CloseResult& result)>;
 
 using work_item_id_t = uint64_t;
 
 class IOUringInterface;
 
 
-class WorkItem
+class WorkItem : public IWorkItem
 {
 public:
     enum class Type
@@ -107,7 +76,6 @@ public:
         m_state = State::FREE;
     }
 
-
     Type get_type() const
     {
         return m_work_type;
@@ -128,7 +96,7 @@ public:
     /** submit a connect request */
     void submit(const IPAddress& target, const connect_callback_func_t& cb);
     /** submit a send request */
-    void submit(const send_callback_func_t& cb);
+    void submit(const send_callback_func_t& cb) override;
     /** submit a recv request */
     void submit(const recv_callback_func_t& cb);
     /** submit a accept request */
@@ -215,7 +183,7 @@ public:
     void init_send_msg(
         const IPAddress& sock_addr, dscp_t dscp, timetolive_t ttl);
 
-    SendPacket& get_send_packet()
+    SendPacket& get_send_packet() override
     {
         m_send_packet.reset();
         return m_send_packet;
