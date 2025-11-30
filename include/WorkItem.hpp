@@ -79,9 +79,10 @@ public:
     };
 
 
-    WorkItem(const std::shared_ptr<IOUringInterface>& network,
+    WorkItem(Logger& logger, const std::shared_ptr<IOUringInterface>& network,
         work_item_id_t id, const char* descr, const std::shared_ptr<ISocket>& s)
-        : m_work_type(Type::UNKNOWN)
+        : m_logger(logger)
+        ,  m_work_type(Type::UNKNOWN)
         , m_io_ring(network)
         , m_id(id)
         , m_socket(s)
@@ -214,8 +215,6 @@ public:
     void init_send_msg(
         const IPAddress& sock_addr, dscp_t dscp, timetolive_t ttl);
 
-    Logger& get_logger();
-
     SendPacket& get_send_packet()
     {
         m_send_packet.reset();
@@ -250,6 +249,8 @@ private:
         FREE
     };
 
+    Logger& m_logger;
+
     State m_state = State::IN_USE;
 
     SendPacket m_send_packet;
@@ -279,6 +280,11 @@ private:
     const IPAddress& get_socket_address() const
     {
         return m_sa;
+    }
+
+    Logger& get_logger()
+    {
+        return m_logger;
     }
 
     ReceivePostAction do_stream_socket_receive();

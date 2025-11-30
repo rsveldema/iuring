@@ -22,10 +22,6 @@ const char* WorkItem::type_to_string(Type t)
     return "<unknown type of work item>";
 }
 
-Logger& WorkItem::get_logger()
-{
-    return m_io_ring->get_logger();
-}
 
 void WorkItem::submit(const recv_callback_func_t& cb)
 {

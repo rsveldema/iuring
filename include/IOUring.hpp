@@ -3,8 +3,9 @@
 #include <stack>
 
 #include "Error.hpp"
-#include "IOUringInterface.hpp"
+#include "NetworkAdapter.hpp"
 
+#include "IOUringInterface.hpp"
 #include <liburing.h>
 
 static constexpr size_t DEFAULT_QUEUE_SIZE = 64;
@@ -13,15 +14,18 @@ namespace network
 {
 class IOUring : public IOUringInterface, public std::enable_shared_from_this<IOUring>
 {
-public:
-    IOUring(Logger& logger, const std::string& interface_name, bool tune, size_t queue_size = DEFAULT_QUEUE_SIZE);
-    ~IOUring();
+private:
+    IOUring(Logger& logger, NetworkAdapter& adapter, size_t queue_size);
 
     IOUring(const IOUring&) = delete;
     IOUring& operator=(const IOUring&) = delete;
     IOUring(IOUring&&) = delete;
     IOUring& operator=(IOUring&&) = delete;
 
+public:
+    static std::shared_ptr<IOUring> create(Logger& logger, NetworkAdapter& adapter, size_t queue_size = DEFAULT_QUEUE_SIZE);
+
+    ~IOUring();
     Error init() override;
     Error poll_completion_queues() override;
 
@@ -40,12 +44,21 @@ public:
         close_callback_func_t handler) override;
 
 
+    /** @returns aa:bb:cc:dd:ee:ff
+     */
+    std::string get_my_mac_address() override
+    {
+        return m_adapter.get_my_mac_address();
+    }
+
 private:
     static constexpr auto QD = 64;
     static constexpr auto BUF_SHIFT = 12; /* 4k */
     static constexpr auto CQES = (QD * 16);
     static constexpr auto BUFFERS = CQES;
 
+    bool m_initialized = false;
+    Logger& m_logger;
     size_t m_queue_size = 0;
     io_uring_buf_reg m_reg;
 
@@ -56,6 +69,19 @@ private:
     unsigned char* buffer_base = nullptr;
     std::stack<int> m_free_send_ids;
 
+    NetworkAdapter& m_adapter;
+    WorkPool m_pool;
+
+    Logger& get_logger()
+    {
+        return m_logger;
+    }
+
+
+    WorkPool& get_pool()
+    {
+        return m_pool;
+    }
 
     Error setup_buffer_pool();
     void probe_features();

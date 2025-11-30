@@ -9,17 +9,42 @@
 
 namespace network
 {
-IOUring::IOUring(Logger& logger, const std::string& interface_name, bool tune,
-    size_t queue_size)
-    : IOUringInterface(logger, interface_name, tune)
+std::shared_ptr<IOUring> IOUring::create(
+    Logger& logger, NetworkAdapter& adapter, size_t queue_size)
+{
+    /** make_shared<> does not work with private ctors
+     * so we inherit from it with a public ctor
+     * which can be make_shared<>.
+     */
+    class EnableShared : public IOUring
+    {
+    public:
+        EnableShared(Logger& logger, NetworkAdapter& adapter, size_t queue_size)
+            : IOUring(logger, adapter, queue_size)
+        {
+        }
+    };
+
+    return std::make_shared<EnableShared>(logger, adapter, queue_size);
+}
+
+
+IOUring::IOUring(Logger& logger, NetworkAdapter& adapter, size_t queue_size)
+    : m_logger(logger)
     , m_queue_size(queue_size)
+    , m_adapter(adapter)
+    , m_pool(logger)
 {
 }
 
+IOUring::~IOUring()
+{
+    io_uring_queue_exit(&m_ring);
+}
+
+
 Error IOUring::init()
 {
-    IOUringInterface::init();
-
     init_ring();
 
     probe_features();
@@ -38,12 +63,12 @@ void IOUring::init_ring()
         params.cq_entries = QD * 8;
         params.flags =
             // IORING_SETUP_IOPOLL | // only for storage
-            IORING_SETUP_SUBMIT_ALL | //
+            IORING_SETUP_SUBMIT_ALL |    //
             IORING_SETUP_COOP_TASKRUN |  //
             IORING_SETUP_SINGLE_ISSUER | //
             IORING_SETUP_DEFER_TASKRUN | //
-            IORING_SETUP_CQSIZE | //
-             0;
+            IORING_SETUP_CQSIZE |        //
+            0;
 
         if (const auto ret = io_uring_queue_init_params(QD, &m_ring, &params);
             ret < 0)
@@ -60,8 +85,7 @@ void IOUring::init_ring()
             auto ret = io_uring_register_ring_fd(&m_ring);
             if (ret < 0)
             {
-                LOG_ERROR(
-                    get_logger(), "register_ring_fd: %s", strerror(-ret));
+                LOG_ERROR(get_logger(), "register_ring_fd: %s", strerror(-ret));
                 abort();
             }
 
@@ -147,7 +171,7 @@ void IOUring::probe_features()
 {
     ProbeUringFeatures probe(&m_ring, get_logger());
     assert(probe.supports(UringFeature::IORING_OP_ACCEPT));
-    //assert(probe.supports(UringFeature::IORING_OP_LISTEN));
+    // assert(probe.supports(UringFeature::IORING_OP_LISTEN));
     assert(probe.supports(UringFeature::IORING_OP_RECV));
     assert(probe.supports(UringFeature::IORING_OP_RECVMSG));
     assert(probe.supports(UringFeature::IORING_OP_SEND));
@@ -156,11 +180,6 @@ void IOUring::probe_features()
     assert(probe.supports(UringFeature::IORING_OP_CONNECT));
 }
 
-
-IOUring::~IOUring()
-{
-    io_uring_queue_exit(&m_ring);
-}
 
 void IOUring::submit_all_requests()
 {
@@ -217,8 +236,8 @@ void IOUring::submit(WorkItem& item)
         int flags = 0;
         // flags |= IOSQE_BUFFER_SELECT;
 
-        LOG_INFO(get_logger(), "accept on socket %d",
-            item.get_socket()->get_fd());
+        LOG_INFO(
+            get_logger(), "accept on socket %d", item.get_socket()->get_fd());
 
         item.m_accept_sock_len = 0;
         io_uring_prep_accept(sqe, item.get_socket()->get_fd(),
@@ -293,7 +312,8 @@ void IOUring::submit(WorkItem& item)
             int flags = 0;
             const auto& sp = item.get_raw_send_packet();
 
-            LOG_INFO(get_logger(), "sending %ld bytes (%s)\n", sp.size(), sp.data());
+            LOG_INFO(
+                get_logger(), "sending %ld bytes (%s)\n", sp.size(), sp.data());
             io_uring_prep_send(sqe, fd, sp.data(), sp.size(), flags);
         }
         else
@@ -318,7 +338,7 @@ void IOUring::submit(WorkItem& item)
 }
 
 void IOUring::call_close_callback(
-        std::shared_ptr<WorkItem> work_item, io_uring_cqe* cqe)
+    std::shared_ptr<WorkItem> work_item, io_uring_cqe* cqe)
 {
     const int status = cqe->res;
     LOG_DEBUG(get_logger(), "=======> CLOSE CALLBACK: %d\n", cqe->res);
@@ -649,8 +669,8 @@ Error IOUring::poll_completion_queues()
     return Error::OK;
 }
 
-void IOUring::submit_accept(const std::shared_ptr<ISocket>& socket,
-        accept_callback_func_t handler)
+void IOUring::submit_accept(
+    const std::shared_ptr<ISocket>& socket, accept_callback_func_t handler)
 {
     assert(socket->get_kind() == SocketKind::SERVER_STREAM_SOCKET);
     assert(m_initialized);
@@ -675,7 +695,8 @@ void IOUring::submit_recv(
         socket, shared_from_this(), handler, "read-from-socket");
 }
 
-std::shared_ptr<WorkItem> IOUring::submit_send(const std::shared_ptr<ISocket>& socket)
+std::shared_ptr<WorkItem> IOUring::submit_send(
+    const std::shared_ptr<ISocket>& socket)
 {
     assert(m_initialized);
     auto item = get_pool().alloc_send_work_item(
@@ -683,8 +704,8 @@ std::shared_ptr<WorkItem> IOUring::submit_send(const std::shared_ptr<ISocket>& s
     return item;
 }
 
-void IOUring::submit_close(const std::shared_ptr<ISocket>& socket,
-        close_callback_func_t handler)
+void IOUring::submit_close(
+    const std::shared_ptr<ISocket>& socket, close_callback_func_t handler)
 {
     assert(m_initialized);
     get_pool().alloc_close_work_item(

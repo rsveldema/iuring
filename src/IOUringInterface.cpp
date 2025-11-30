@@ -4,6 +4,8 @@
 #include <ifaddrs.h>
 #include <thread>
 
+#include "IOUringInterface.hpp"
+
 using namespace std::chrono_literals;
 
 namespace network
@@ -23,7 +25,7 @@ Error errno_to_error(int err)
     return Error::UNKNOWN;
 }
 
-Error IOUringInterface::init()
+Error NetworkAdapter::init()
 {
     retrieve_interface_ip();
     tune();
@@ -31,7 +33,7 @@ Error IOUringInterface::init()
 }
 
 
-void IOUringInterface::tune()
+void NetworkAdapter::tune()
 {
     if (! m_tune)
     {
@@ -49,7 +51,7 @@ void IOUringInterface::tune()
 }
 
 
-bool IOUringInterface::try_get_interface_ip()
+bool NetworkAdapter::try_get_interface_ip()
 {
     assert(get_interface_name() != "");
 
@@ -102,7 +104,7 @@ bool IOUringInterface::try_get_interface_ip()
     return success;
 }
 
-bool IOUringInterface::retrieve_interface_ip()
+bool NetworkAdapter::retrieve_interface_ip()
 {
     // try_get_interface_ip();
     // set_interface_ip4("192.168.1.130");
@@ -115,7 +117,7 @@ bool IOUringInterface::retrieve_interface_ip()
     return true;
 }
 
-std::string IOUringInterface::get_my_mac_address()
+std::string NetworkAdapter::get_my_mac_address()
 {
     if (mac_opt)
     {

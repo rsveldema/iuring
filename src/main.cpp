@@ -58,7 +58,8 @@ void do_http_ping(const network::IPAddress& ping_addr, Logger& logger,
         std::make_shared<network::SocketImpl>(network::SocketType::IPV4_TCP,
             port, logger, network::SocketKind::CLIENT_SOCKET);
 
-    auto io = std::make_shared<network::IOUring>(logger, interface_name, tune);
+    network::NetworkAdapter adapter(logger, interface_name, tune);
+    auto io = network::IOUring::create(logger, adapter);
     io->init();
 
     io->submit_connect(
@@ -102,7 +103,8 @@ void do_webserver(Logger& logger, const std::string& interface_name, bool tune)
         std::make_shared<network::SocketImpl>(network::SocketType::IPV4_TCP,
             port, logger, network::SocketKind::SERVER_STREAM_SOCKET);
 
-    auto io = std::make_shared<network::IOUring>(logger, interface_name, tune);
+    network::NetworkAdapter adapter(logger, interface_name, tune);
+    auto io = network::IOUring::create(logger, adapter);
     io->init();
 
     io->submit_accept(
