@@ -1,8 +1,11 @@
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
 
 #include <stdio.h>
 
-TEST(dummy, dummmier) {
+#include "mocks.hpp"
+
+TEST(check_mocks, declare_tests) {
     printf("hello world\n");
+
+    network::mocks::WorkItem work_item;
+    network::mocks::IOUring mock_ring;
 }
