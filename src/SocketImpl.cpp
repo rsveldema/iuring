@@ -86,20 +86,20 @@ namespace
 
         case SocketType::IPV4_UDP:
             fd = socket(AF_INET, SOCK_DGRAM | non_blocking_option, 0);
-            LOG_DEBUG(logger, "socket-v4 {} with dgram type!", fd);
+            LOG_INFO(logger, "socket-v4 {} with dgram type!", fd);
             break;
         case SocketType::IPV4_TCP:
             fd = socket(AF_INET, SOCK_STREAM | non_blocking_option, 0);
-            LOG_DEBUG(logger, "socket-v4 {} with stream type!", fd);
+            LOG_INFO(logger, "socket-v4 {} with stream type!", fd);
             break;
         case SocketType::IPV6_UDP:
             fd = socket(AF_INET6, SOCK_DGRAM | non_blocking_option, 0);
-            LOG_DEBUG(logger, "socket-v6 {} with dgram type!", fd);
+            LOG_INFO(logger, "socket-v6 {} with dgram type!", fd);
             abort();
             break;
         case SocketType::IPV6_TCP:
             fd = socket(AF_INET6, SOCK_STREAM | non_blocking_option, 0);
-            LOG_DEBUG(logger, "socket-v6 {} with stream type!", fd);
+            LOG_INFO(logger, "socket-v6 {} with stream type!", fd);
             break;
         }
 
@@ -123,7 +123,7 @@ SocketImpl::SocketImpl(SocketType type, SocketPortID port,
     switch (kind)
     {
     case SocketKind::UNICAST_CLIENT_SOCKET: {
-        local_bind(static_cast<SocketPortID>(9090));
+        //local_bind(static_cast<SocketPortID>(9090));
 
         int val = 1;
         int ret =
@@ -268,7 +268,6 @@ void SocketImpl::local_bind(SocketPortID port_id)
 {
     assert(get_fd() >= 0);
 
-
     LOG_DEBUG(get_logger(), "PTP: binding interface to port {}\n", port_id);
     sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
@@ -280,9 +279,9 @@ void SocketImpl::local_bind(SocketPortID port_id)
 
     if (int ret = ::bind(get_fd(), (sockaddr*) &addr, sizeof(addr)); ret < 0)
     {
-        perror("bind");
-        LOG_ERROR(get_logger(), "failed to bind to port {}, exiting", port_id);
-        exit(1);
+        perror("bind failed for local_bind");
+        LOG_ERROR(get_logger(), "failed to bind to port {}, exiting (fd={})", port_id, get_fd());
+        abort();
     }
 
     dump_info();

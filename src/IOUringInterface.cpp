@@ -61,7 +61,7 @@ bool NetworkAdapter::try_get_interface_ip()
             continue;
         }
 
-        LOG_INFO(get_logger(), "FOUND INTERFACE: %-8s {} ({})", ifa->ifa_name,
+        LOG_INFO(get_logger(), "FOUND INTERFACE: {} {} ({})", ifa->ifa_name,
             (family == AF_PACKET)    ? "AF_PACKET" :
                 (family == AF_INET)  ? "AF_INET" :
                 (family == AF_INET6) ? "AF_INET6" :

@@ -423,7 +423,7 @@ void WorkItem::init_send_msg()
     {
         abort();
     }
-    // LOG_DEBUG(get_logger(), "submitting send: %ld bytes\n", size);
+    // LOG_DEBUG(get_logger(), "submitting send: {} bytes\n", size);
 }
 
 
@@ -654,7 +654,7 @@ void IOUring::call_callback_and_free_work_item_id(io_uring_cqe* cqe)
     if (!work_item)
     {
         LOG_ERROR(get_logger(),
-            "no work item %ld exists anymore (status {}, flags {}, res = {})",
+            "no work item {} exists anymore (status {}, flags {}, res = {})",
             id, recv_status, cqe->flags, cqe->res);
         return;
     }
