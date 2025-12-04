@@ -54,7 +54,7 @@ IOUring::~IOUring()
 }
 
 
-Error IOUring::init()
+error::Error IOUring::init()
 {
     init_ring();
 
@@ -122,7 +122,7 @@ void IOUring::init_ring()
     io_uring_ring_dontfork(&m_ring);
 }
 
-Error IOUring::setup_buffer_pool()
+error::Error IOUring::setup_buffer_pool()
 {
     buf_ring_size = (sizeof(io_uring_buf) + buffer_size()) * BUFFERS;
     void* mapped = mmap(NULL, buf_ring_size, PROT_READ | PROT_WRITE,
@@ -130,7 +130,7 @@ Error IOUring::setup_buffer_pool()
     if (mapped == MAP_FAILED)
     {
         LOG_ERROR(get_logger(), "buf_ring mmap: {}\n", strerror(errno));
-        return Error::MMAP_FAILED;
+        return error::Error::MMAP_FAILED;
     }
     buf_ring = (struct io_uring_buf_ring*) mapped;
 
@@ -152,7 +152,7 @@ Error IOUring::setup_buffer_pool()
             "buf_ring init failed: {}\n"
             "NB This requires a kernel version >= 6.0\n",
             strerror(-ret));
-        return errno_to_error(-ret);
+        return error::errno_to_error(-ret);
     }
 
     for (auto i = 0u; i < BUFFERS; i++)
@@ -167,7 +167,7 @@ Error IOUring::setup_buffer_pool()
         m_free_send_ids.push(i);
     }
 
-    return Error::OK;
+    return error::Error::OK;
 }
 
 void IOUring::recycle_buffer(int idx)
@@ -723,7 +723,7 @@ void IOUring::send_packet(const std::shared_ptr<WorkItem>& work_item)
 }
 
 
-Error IOUring::poll_completion_queues()
+error::Error IOUring::poll_completion_queues()
 {
     if (false)
     {
@@ -732,7 +732,7 @@ Error IOUring::poll_completion_queues()
         if (ret < 0)
         {
             perror("failed to io-submit");
-            return Error::UNKNOWN;
+            return error::Error::UNKNOWN;
         }
     }
 
@@ -758,7 +758,7 @@ Error IOUring::poll_completion_queues()
         abort();
         break;
     }
-    return Error::OK;
+    return error::Error::OK;
 }
 
 void IOUring::submit_accept(

@@ -8,11 +8,11 @@
 #include <memory>
 
 #include <slogger/ILogger.hpp>
+#include <slogger/Error.hpp>
 
 #include "MacAddress.hpp"
 #include "IPAddress.hpp"
 #include "ISocket.hpp"
-#include "Error.hpp"
 #include "IWorkItem.hpp"
 #include "CompletionCallbacks.hpp"
 #include "NetworkAdapter.hpp"
@@ -26,11 +26,11 @@ public:
 
     static std::shared_ptr<IOUringInterface> create_impl(logging::ILogger& logger, NetworkAdapter& adapter);
 
-    virtual Error init() = 0;
+    virtual error::Error init() = 0;
 
     virtual std::optional<MacAddress> get_my_mac_address() = 0;
 
-    virtual Error poll_completion_queues() = 0;
+    virtual error::Error poll_completion_queues() = 0;
 
     virtual void submit_connect(const std::shared_ptr<ISocket>& socket,
         const IPAddress& target, connect_callback_func_t handler) = 0;

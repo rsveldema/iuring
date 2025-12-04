@@ -4,7 +4,9 @@ project(io_uring_interface_suite CXX)
 
 include(CTest)
 
-add_subdirectory(simple-logger)
+if (NOT TARGET slogger)
+    add_subdirectory(simple-logger)
+endif()
 
 enable_testing()
 

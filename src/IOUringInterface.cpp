@@ -4,28 +4,14 @@
 
 #include "IOUring.hpp"
 
-#include <iuring/ShellUtils.hpp>
+#include <slogger/ShellUtils.hpp>
+
 #include <iuring/IOUringInterface.hpp>
 
 using namespace std::chrono_literals;
 
 namespace iuring
 {
-
-Error errno_to_error(int err)
-{
-    switch (err)
-    {
-    case 0:
-        return Error::OK;
-        return Error::RANGE;
-
-    default:
-        break;
-    }
-    return Error::UNKNOWN;
-}
-
 void NetworkAdapter::init()
 {
     retrieve_interface_ip();

@@ -36,10 +36,10 @@ namespace mocks
     class IOUring : public IOUringInterface
     {
     public:
-        MOCK_METHOD(Error, init, (), (override));
+        MOCK_METHOD(error::Error, init, (), (override));
         MOCK_METHOD(
             std::optional<MacAddress>, get_my_mac_address, (), (override));
-        MOCK_METHOD(Error, poll_completion_queues, (), (override));
+        MOCK_METHOD(error::Error, poll_completion_queues, (), (override));
         MOCK_METHOD(void, submit_connect,
             (const std::shared_ptr<ISocket>& socket, const IPAddress& target,
                 connect_callback_func_t handler),

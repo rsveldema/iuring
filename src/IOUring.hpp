@@ -9,7 +9,8 @@
 
 #include <stack>
 
-#include "iuring/Error.hpp"
+#include <slogger/Error.hpp>
+
 #include "iuring/NetworkAdapter.hpp"
 #include "iuring/IOUringInterface.hpp"
 
@@ -35,9 +36,9 @@ public:
 
     ~IOUring();
 
-    Error init() override;
+    error::Error init() override;
 
-    Error poll_completion_queues() override;
+    error::Error poll_completion_queues() override;
 
     std::shared_ptr<IWorkItem> submit_send(const std::shared_ptr<ISocket>& socket) override;
 
@@ -93,7 +94,7 @@ private:
         return m_pool;
     }
 
-    Error setup_buffer_pool();
+    error::Error setup_buffer_pool();
     void probe_features();
     void init_ring();
 
