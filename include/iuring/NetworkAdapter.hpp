@@ -24,13 +24,13 @@ public:
     void set_interface_ip4(const std::string& ip)
     {
         m_interface_ip4 = ip;
-        LOG_INFO(get_logger(), "interface IP4 set to " + ip);
+        LOG_INFO(get_logger(), "interface IP4 set to {}", ip);
     }
 
     void set_interface_ip6(const std::string& ip)
     {
         m_interface_ip6 = ip;
-        LOG_INFO(get_logger(), "interface IP6 set to " + ip);
+        LOG_INFO(get_logger(), "interface IP6 set to {}", ip);
     }
 
     const std::string& get_interface_name() const

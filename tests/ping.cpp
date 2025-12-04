@@ -17,13 +17,14 @@ static void Usage()
 }
 
 void handle_packet_sent(const std::shared_ptr<iuring::IOUringInterface>& io,
-    const std::shared_ptr<iuring::ISocket>& socket)
+    const std::shared_ptr<iuring::ISocket>& socket,
+    logging::ILogger& logger)
 {
-    io->submit_recv(socket, [io, socket](const iuring::ReceivedMessage& msg) {
-        fprintf(stderr, "received: %s\n", msg.to_string().c_str());
+    io->submit_recv(socket, [&logger, io, socket](const iuring::ReceivedMessage& msg) {
+        LOG_INFO(logger, "received: {}", msg.to_string());
 
-        io->submit_close(socket, [](const iuring::CloseResult& res) {
-            fprintf(stderr, "connection closed: %d\n", res.status);
+        io->submit_close(socket, [&logger](const iuring::CloseResult& res) {
+            LOG_INFO(logger, "connection closed: {}", res.status);
             assert(res.status == 0);
             connection_has_been_closed = true;
         });
@@ -33,7 +34,8 @@ void handle_packet_sent(const std::shared_ptr<iuring::IOUringInterface>& io,
 }
 
 void handle_new_connection(const std::shared_ptr<iuring::IOUringInterface>& io,
-    const std::shared_ptr<iuring::ISocket>& socket)
+    const std::shared_ptr<iuring::ISocket>& socket,
+    logging::ILogger& logger)
 {
     auto wi = io->submit_send(socket);
     auto& pkt = wi->get_send_packet();
@@ -43,9 +45,9 @@ void handle_new_connection(const std::shared_ptr<iuring::IOUringInterface>& io,
     pkt.append("Accept: application/json\r\n");
     pkt.append("\r\n");
 
-    wi->submit_stream_data([io, socket](const iuring::SendResult& result) {
-        printf("packet sent successfully: %d\n", result.status);
-        handle_packet_sent(io, socket);
+    wi->submit_stream_data([&logger, io, socket](const iuring::SendResult& result) {
+        LOG_INFO(logger, "packet sent successfully: {}", result.status);
+        handle_packet_sent(io, socket, logger);
     });
 }
 
@@ -54,8 +56,8 @@ void do_http_ping(const iuring::IPAddress& ping_addr, logging::ILogger& logger,
 {
     auto port = iuring::SocketPortID::UNENCRYPTED_WEB_PORT;
 
-    LOG_INFO(logger, "going to ping %s\n",
-        ping_addr.to_human_readable_ip_string().c_str());
+    LOG_INFO(logger, "going to ping {}",
+        ping_addr.to_human_readable_ip_string());
 
 
     iuring::NetworkAdapter adapter(logger, interface_name, tune);
@@ -65,9 +67,9 @@ void do_http_ping(const iuring::IPAddress& ping_addr, logging::ILogger& logger,
     auto socket = iuring::ISocket::create_impl(iuring::SocketType::IPV4_TCP,
         port, logger, iuring::SocketKind::UNICAST_CLIENT_SOCKET);
     io->submit_connect(
-        socket, ping_addr, [io, socket](const iuring::ConnectResult& res) {
+        socket, ping_addr, [io, socket, &logger](const iuring::ConnectResult& res) {
             assert(res.status == 0);
-            handle_new_connection(io, socket);
+            handle_new_connection(io, socket, logger);
         });
 
     time_utils::Timeout timeout(20s);

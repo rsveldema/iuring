@@ -166,19 +166,4 @@ std::vector<std::string> split(const std::string_view& s, const char sep)
     return ret;
 }
 
-
-std::string sprintf(const char* format, ...)
-{
-    va_list ap;
-
-    char buffer[1024];
-
-    va_start(ap, format);
-    vsnprintf(buffer, sizeof(buffer), format, ap);
-    va_end(ap);
-
-    return buffer;
-}
-
-
 } // namespace StringUtils

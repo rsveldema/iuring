@@ -86,20 +86,20 @@ namespace
 
         case SocketType::IPV4_UDP:
             fd = socket(AF_INET, SOCK_DGRAM | non_blocking_option, 0);
-            LOG_DEBUG(logger, "socket-v4 %d with dgram type!", fd);
+            LOG_DEBUG(logger, "socket-v4 {} with dgram type!", fd);
             break;
         case SocketType::IPV4_TCP:
             fd = socket(AF_INET, SOCK_STREAM | non_blocking_option, 0);
-            LOG_DEBUG(logger, "socket-v4 %d with stream type!", fd);
+            LOG_DEBUG(logger, "socket-v4 {} with stream type!", fd);
             break;
         case SocketType::IPV6_UDP:
             fd = socket(AF_INET6, SOCK_DGRAM | non_blocking_option, 0);
-            LOG_DEBUG(logger, "socket-v6 %d with dgram type!", fd);
+            LOG_DEBUG(logger, "socket-v6 {} with dgram type!", fd);
             abort();
             break;
         case SocketType::IPV6_TCP:
             fd = socket(AF_INET6, SOCK_STREAM | non_blocking_option, 0);
-            LOG_DEBUG(logger, "socket-v6 %d with stream type!", fd);
+            LOG_DEBUG(logger, "socket-v6 {} with stream type!", fd);
             break;
         }
 
@@ -162,7 +162,7 @@ SocketImpl::SocketImpl(SocketType type, SocketPortID port,
             get_fd(), (struct sockaddr*) &server_addr, sizeof(server_addr));
         if (err < 0)
         {
-            fprintf(stderr, "bind error: %s (port %d)\n", strerror(errno),
+            fprintf(stderr, "bind error: {} (port {})\n", strerror(errno),
                 tmp_port);
             abort();
         }
@@ -170,7 +170,7 @@ SocketImpl::SocketImpl(SocketType type, SocketPortID port,
         err = ::listen(get_fd(), 1024);
         if (err < 0)
         {
-            fprintf(stderr, "listen error: %s, port %d\n", strerror(errno),
+            fprintf(stderr, "listen error: {}, port {}\n", strerror(errno),
                 tmp_port);
             abort();
         }
@@ -196,7 +196,7 @@ void SocketImpl::dump_info()
 
     const auto port = ntohs(sa->sin_port);
     const auto addr = sa->sin_addr;
-    LOG_DEBUG(get_logger(), "DOUBLE CHECK -----> port bound to %d: %s", port,
+    LOG_DEBUG(get_logger(), "DOUBLE CHECK -----> port bound to {}: {}", port,
         inet_ntoa(addr));
 }
 
@@ -225,7 +225,7 @@ void SocketImpl::join_multicast_group(
     assert(!ip_address.empty());
     assert(!source_iface.empty());
 
-    LOG_DEBUG(get_logger(), "PTP: join_multicast_group: '%s', interface '%s'\n",
+    LOG_DEBUG(get_logger(), "PTP: join_multicast_group: '{}', interface '{}'\n",
         ip_address.c_str(), source_iface.c_str());
 
     m_mreq.imr_multiaddr =
@@ -271,7 +271,7 @@ void SocketImpl::local_bind(SocketPortID port_id)
     const auto port_value =
         static_cast<std::underlying_type_t<iuring::SocketPortID>>(port_id);
 
-    LOG_DEBUG(get_logger(), "PTP: binding interface to port %d\n", port_value);
+    LOG_DEBUG(get_logger(), "PTP: binding interface to port {}\n", port_value);
     sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
 
@@ -283,7 +283,7 @@ void SocketImpl::local_bind(SocketPortID port_id)
     {
         perror("bind");
         LOG_ERROR(
-            get_logger(), "failed to bind to port %d, exiting", port_value);
+            get_logger(), "failed to bind to port {}, exiting", port_value);
         exit(1);
     }
 

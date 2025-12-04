@@ -94,7 +94,7 @@ in_addr IPAddress::string_to_ipv4_address(
         ip_address = ip_address.substr(0, ip_address.length() - 3);
     }
 
-    // fprintf(stderr, "using: %s instead of %s\n", ip_address.c_str(),
+    // fprintf(stderr, "using: {} instead of {}\n", ip_address.c_str(),
     // _ip_address.c_str());
     if (int ret = inet_pton(AF_INET, ip_address.c_str(), &(addr.s_addr));
         ret != 1)
@@ -102,7 +102,7 @@ in_addr IPAddress::string_to_ipv4_address(
         if (ret < 0)
             perror("inet_pton - failed");
         else
-            LOG_ERROR(logger, "invalid IP address: %s\n", ip_address.c_str());
+            LOG_ERROR(logger, "invalid IP address: {}\n", ip_address.c_str());
         abort();
     }
     return addr;

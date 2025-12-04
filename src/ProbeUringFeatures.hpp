@@ -118,7 +118,7 @@ public:
                 continue;
             }
 
-            // fprintf(stderr, "supported: op: %d\n", op);
+            // fprintf(stderr, "supported: op: {}\n", op);
             const auto ec = convert_uring_op_to_feature(op);
             m_features[ec] = true;
         }

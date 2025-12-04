@@ -71,11 +71,11 @@ bool NetworkAdapter::try_get_interface_ip()
         const auto family = ifa->ifa_addr->sa_family;
         if (ifa->ifa_name != get_interface_name())
         {
-            LOG_INFO(get_logger(), "skip: interface %s", ifa->ifa_name);
+            LOG_INFO(get_logger(), "skip: interface {}", ifa->ifa_name);
             continue;
         }
 
-        LOG_INFO(get_logger(), "FOUND INTERFACE: %-8s %s (%d)", ifa->ifa_name,
+        LOG_INFO(get_logger(), "FOUND INTERFACE: %-8s {} ({})", ifa->ifa_name,
             (family == AF_PACKET)    ? "AF_PACKET" :
                 (family == AF_INET)  ? "AF_INET" :
                 (family == AF_INET6) ? "AF_INET6" :
@@ -126,12 +126,12 @@ std::optional<MacAddress> NetworkAdapter::get_my_mac_address()
 
     std::array<char, 128> buffer;
     buffer.fill(0);
-    snprintf(buffer.data(), buffer.size(), "/sys/class/net/%s/address",
+    snprintf(buffer.data(), buffer.size(), "/sys/class/net/{}/address",
         get_interface_name().c_str());
     FILE* f = fopen(buffer.data(), "r");
     if (!f)
     {
-        fprintf(stderr, "failed to open %s\n", buffer.data());
+        fprintf(stderr, "failed to open {}\n", buffer.data());
         abort();
         return std::nullopt;
     }

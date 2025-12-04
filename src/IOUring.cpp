@@ -85,7 +85,7 @@ void IOUring::init_ring()
             ret < 0)
         {
             LOG_ERROR(get_logger(),
-                "queue_init failed: %s\n"
+                "queue_init failed: {}\n"
                 "NB: This requires a kernel version >= 6.0",
                 strerror(-ret));
             abort();
@@ -96,14 +96,14 @@ void IOUring::init_ring()
             auto ret = io_uring_register_ring_fd(&m_ring);
             if (ret < 0)
             {
-                LOG_ERROR(get_logger(), "register_ring_fd: %s", strerror(-ret));
+                LOG_ERROR(get_logger(), "register_ring_fd: {}", strerror(-ret));
                 abort();
             }
 
             ret = io_uring_close_ring_fd(&m_ring);
             if (ret < 0)
             {
-                LOG_ERROR(get_logger(), "close_ring_fd: %s\n", strerror(-ret));
+                LOG_ERROR(get_logger(), "close_ring_fd: {}\n", strerror(-ret));
                 abort();
             }
         }
@@ -114,7 +114,7 @@ void IOUring::init_ring()
             ret != 0)
         {
             LOG_ERROR(
-                get_logger(), "io_uring_queue_init: %s\n", strerror(-ret));
+                get_logger(), "io_uring_queue_init: {}\n", strerror(-ret));
             abort();
         }
     }
@@ -129,7 +129,7 @@ Error IOUring::setup_buffer_pool()
         MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
     if (mapped == MAP_FAILED)
     {
-        LOG_ERROR(get_logger(), "buf_ring mmap: %s\n", strerror(errno));
+        LOG_ERROR(get_logger(), "buf_ring mmap: {}\n", strerror(errno));
         return Error::MMAP_FAILED;
     }
     buf_ring = (struct io_uring_buf_ring*) mapped;
@@ -149,7 +149,7 @@ Error IOUring::setup_buffer_pool()
     if (ret)
     {
         LOG_ERROR(get_logger(),
-            "buf_ring init failed: %s\n"
+            "buf_ring init failed: {}\n"
             "NB This requires a kernel version >= 6.0\n",
             strerror(-ret));
         return errno_to_error(-ret);
@@ -202,11 +202,11 @@ void IOUring::submit_all_requests()
     const auto ret = io_uring_submit(&m_ring);
     if (ret < 0)
     {
-        fprintf(stderr, "failed to submit sqe: %s\n", strerror(-ret));
+        fprintf(stderr, "failed to submit sqe: {}\n", strerror(-ret));
     }
     else
     {
-        //fprintf(stderr, "%d jobs submitted\n", ret);
+        //fprintf(stderr, "{} jobs submitted\n", ret);
     }
 }
 
@@ -251,7 +251,7 @@ void IOUring::submit(IWorkItem& _item)
         // flags |= IOSQE_BUFFER_SELECT;
 
         LOG_INFO(
-            get_logger(), "accept on socket %d", item.get_socket()->get_fd());
+            get_logger(), "accept on socket {}", item.get_socket()->get_fd());
 
         item.m_accept_sock_len = 0;
         io_uring_prep_accept(sqe, item.get_socket()->get_fd(),
@@ -269,7 +269,7 @@ void IOUring::submit(IWorkItem& _item)
         assert(item.m_connect_sock_len == sizeof(*sa));
 
         fprintf(
-            stderr, "prep-connect: fd=%d (port %d)\n", fd, htons(sa->sin_port));
+            stderr, "prep-connect: fd={} (port {})\n", fd, htons(sa->sin_port));
 
         io_uring_prep_connect(sqe, fd,
             (struct sockaddr*) &item.m_buffer_for_uring,
@@ -285,14 +285,14 @@ void IOUring::submit(IWorkItem& _item)
         if (item.is_stream())
         {
             int flags = 0;
-            fprintf(stderr, " register rcv: %d\n", item.get_socket()->get_fd());
+            fprintf(stderr, " register rcv: {}\n", item.get_socket()->get_fd());
             io_uring_prep_recv(sqe, item.get_socket()->get_fd(),
                 nullptr, // buffer selected automatically from buffer queue
                 buffer_size(), flags);
         }
         else
         {
-            // fprintf(stderr, "RECV ---- submit: %d\n", idx);
+            // fprintf(stderr, "RECV ---- submit: {}\n", idx);
             memset(&item.m_msg, 0, sizeof(item.m_msg));
 
 
@@ -325,7 +325,10 @@ void IOUring::submit(IWorkItem& _item)
         int flags = 0;
         const auto& sp = item.get_raw_send_packet();
 
-        LOG_INFO(get_logger(), "sending %ld bytes (%s)", sp.size(), sp.data());
+        LOG_INFO(get_logger(),
+            "sending {} bytes ({})",
+            sp.size(),
+            (char*)sp.data());
         io_uring_prep_send(sqe, fd, sp.data(), sp.size(), flags);
 
         if (item.next_request_should_wait_for_this_request())
@@ -340,7 +343,7 @@ void IOUring::submit(IWorkItem& _item)
 
         assert(!item.is_stream());
         int flags = 0;
-        LOG_DEBUG(get_logger(), "SEND ---- submit: %d", fd);
+        LOG_DEBUG(get_logger(), "SEND ---- submit: {}", fd);
         item.init_send_msg();
         io_uring_prep_sendmsg(sqe, fd, &item.m_msg, flags);
 
@@ -429,7 +432,7 @@ void IOUring::call_close_callback(
     std::shared_ptr<WorkItem> work_item, io_uring_cqe* cqe)
 {
     const int status = cqe->res;
-    LOG_DEBUG(get_logger(), "=======> CLOSE CALLBACK: %d", cqe->res);
+    LOG_DEBUG(get_logger(), "=======> CLOSE CALLBACK: {}", cqe->res);
     work_item->call_close_callback(status);
 }
 
@@ -437,10 +440,10 @@ void IOUring::call_close_callback(
 void IOUring::call_send_callback(
     std::shared_ptr<WorkItem> work_item, io_uring_cqe* cqe)
 {
-    LOG_DEBUG(get_logger(), "=======> SEND CALLBACK: %d", cqe->res);
+    LOG_DEBUG(get_logger(), "=======> SEND CALLBACK: {}", cqe->res);
     if (cqe->res < 0)
     {
-        LOG_ERROR(get_logger(), "recv cqe bad res %d", cqe->res);
+        LOG_ERROR(get_logger(), "recv cqe bad res {}", cqe->res);
         if (cqe->res == -EFAULT || cqe->res == -EINVAL)
         {
             LOG_ERROR(
@@ -455,10 +458,10 @@ void IOUring::call_send_callback(
 void IOUring::call_connect_callback(
     std::shared_ptr<WorkItem> work_item, io_uring_cqe* cqe)
 {
-    LOG_DEBUG(get_logger(), "=======> CONNECT CALLBACK: %d", cqe->res);
+    LOG_DEBUG(get_logger(), "=======> CONNECT CALLBACK: {}", cqe->res);
     if (cqe->res < 0)
     {
-        LOG_ERROR(get_logger(), "recv cqe bad res %d (%s)", cqe->res,
+        LOG_ERROR(get_logger(), "recv cqe bad res {} ({})", cqe->res,
             strerror(-cqe->res));
         if (cqe->res == -EFAULT || cqe->res == -EINVAL)
         {
@@ -473,7 +476,7 @@ void IOUring::call_connect_callback(
         work_item->m_buffer_for_uring, work_item->m_connect_sock_len);
     const ConnectResult new_conn{ .status = status, .m_address = addr };
 
-    fprintf(stderr, "CONN- XQE - res = %d\n", status);
+    fprintf(stderr, "CONN- XQE - res = {}\n", status);
 
     work_item->call_connect_callback(new_conn);
 }
@@ -485,7 +488,7 @@ void IOUring::call_accept_callback(
     // if (!(cqe->flags & IORING_CQE_F_BUFFER) || cqe->res < 0)
     if (cqe->res < 0)
     {
-        LOG_ERROR(get_logger(), "recv cqe bad res %d (%s)", cqe->res,
+        LOG_ERROR(get_logger(), "recv cqe bad res {} ({})", cqe->res,
             strerror(-cqe->res));
         if (cqe->res == -EFAULT || cqe->res == -EINVAL)
         {
@@ -497,7 +500,7 @@ void IOUring::call_accept_callback(
 
     const int fd = cqe->res;
 
-    fprintf(stderr, " XQE - res = %d\n", fd);
+    fprintf(stderr, " XQE - res = {}\n", fd);
 
     const iuring::IPAddress addr(
         work_item->m_buffer_for_uring, work_item->m_accept_sock_len);
@@ -513,7 +516,7 @@ ReceivePostAction IOUring::call_recv_handler_stream(const uint8_t* buffer,
     IPAddress source_addr;
     const auto payload_length = cqe->res;
 
-    LOG_DEBUG(get_logger(), "size = %d\n", (int) payload_length);
+    LOG_DEBUG(get_logger(), "size = {}\n", (int) payload_length);
 
     ReceivedMessage payload(buffer, payload_length, source_addr);
 
@@ -526,7 +529,7 @@ ReceivePostAction IOUring::call_recv_handler_datagram(const uint8_t* buffer,
 {
     if (!(cqe->flags & IORING_CQE_F_BUFFER))
     {
-        LOG_ERROR(get_logger(), "recv cqe bad res %d", cqe->res);
+        LOG_ERROR(get_logger(), "recv cqe bad res {}", cqe->res);
         abort();
         return ReceivePostAction::RE_SUBMIT;
     }
@@ -552,7 +555,7 @@ ReceivePostAction IOUring::call_recv_handler_datagram(const uint8_t* buffer,
         const auto r = io_uring_recvmsg_payload_length(
             recv_msg_out, cqe->res, &work_item->m_msg);
 
-        LOG_ERROR(get_logger(), "truncated msg need %u received %u",
+        LOG_ERROR(get_logger(), "truncated msg need {} received {}",
             recv_msg_out->payloadlen, r);
 
         return ReceivePostAction::RE_SUBMIT;
@@ -575,7 +578,7 @@ ReceivePostAction IOUring::call_recv_handler_datagram(const uint8_t* buffer,
     }
 
     default: {
-        fprintf(stderr, "namelen = %d\n", recv_msg_out->namelen);
+        fprintf(stderr, "namelen = {}\n", recv_msg_out->namelen);
         abort();
     }
     }
@@ -584,7 +587,7 @@ ReceivePostAction IOUring::call_recv_handler_datagram(const uint8_t* buffer,
         recv_msg_out, cqe->res, &work_item->m_msg);
 
     LOG_DEBUG(get_logger(),
-        "io_uring: received %u bytes (namelen = %d) from %s", payload_length,
+        "io_uring: received {} bytes (namelen = {}) from {}", payload_length,
         work_item->m_msg.msg_namelen,
         source_addr.to_human_readable_string().c_str());
 
@@ -604,7 +607,7 @@ ReceivePostAction IOUring::call_recv_callback(
 {
     if (cqe->res < 0)
     {
-        LOG_ERROR(get_logger(), "recv cqe bad res %d (%s)", cqe->res,
+        LOG_ERROR(get_logger(), "recv cqe bad res {} ({})", cqe->res,
             strerror(-cqe->res));
         switch (cqe->res)
         {
@@ -651,7 +654,7 @@ void IOUring::call_callback_and_free_work_item_id(io_uring_cqe* cqe)
     if (!work_item)
     {
         LOG_ERROR(get_logger(),
-            "no work item %ld exists anymore (status %d, flags %d, res = %d)",
+            "no work item %ld exists anymore (status {}, flags {}, res = {})",
             id, recv_status, cqe->flags, cqe->res);
         return;
     }
@@ -660,14 +663,14 @@ void IOUring::call_callback_and_free_work_item_id(io_uring_cqe* cqe)
     if (cqe->res == -ENOBUFS)
     {
         LOG_ERROR(get_logger(),
-            "uring ---> ENOBUFS buffer??? -- status: %d (%s)", recv_status,
+            "uring ---> ENOBUFS buffer??? -- status: {} ({})", recv_status,
             work_item->get_descr().c_str());
         return;
     }
 
     if (cqe->flags & IORING_CQE_F_MORE)
     {
-        LOG_DEBUG(get_logger(), "NOTE: more completion events to follow (%s)",
+        LOG_DEBUG(get_logger(), "NOTE: more completion events to follow ({})",
             work_item->get_descr().c_str());
         // return;
     }
@@ -751,7 +754,7 @@ Error IOUring::poll_completion_queues()
         break;
 
     default:
-        LOG_ERROR(get_logger(), "failed: %s\n", strerror(-success));
+        LOG_ERROR(get_logger(), "failed: {}\n", strerror(-success));
         abort();
         break;
     }

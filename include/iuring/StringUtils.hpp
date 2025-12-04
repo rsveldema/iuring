@@ -62,8 +62,6 @@ bool ends_with(const std::string_view& s, const std::string_view& end);
 
 std::optional<uint32_t> hex_string_to_int(const std::string& s);
 
-std::string sprintf(const char* format, ...);
-
 std::string trim(const std::string_view& s);
 
 std::optional<int32_t> parse_int(const std::string& value);

@@ -16,32 +16,28 @@ file(GLOB_RECURSE INCLUDE_FILES "include/*.hpp")
 
 add_library(iuring)
 
+target_compile_features(iuring PUBLIC cxx_std_20) #
 target_link_libraries(iuring -luring ${UUID_LIBRARIES})
 target_include_directories(iuring PUBLIC ${PUBLIC_INCLUDE_DIRECTORIES})
 target_include_directories(iuring PRIVATE ${PRIVATE_INCLUDE_DIRECTORIES})
 
 target_sources(iuring
     PUBLIC FILE_SET HEADERS
-    BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include 
+    BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     FILES ${INCLUDE_FILES}
     PRIVATE ${SOURCE_FILES}
 )
 
 install(TARGETS iuring FILE_SET HEADERS)
 
-set_property(TARGET iuring PROPERTY CXX_STANDARD 20)
-
 
 # Set target properties for public headers
 set_target_properties(iuring PROPERTIES PUBLIC_HEADER "${INCLUDE_FILES}")
 
-
 add_executable(ping tests/ping.cpp)
-set_property(TARGET ping PROPERTY CXX_STANDARD 20)
 target_link_libraries(ping iuring)
 
 add_executable(echo_server tests/echo_server.cpp)
-set_property(TARGET echo_server PROPERTY CXX_STANDARD 20)
 target_link_libraries(echo_server iuring)
 
 find_package(GTest)

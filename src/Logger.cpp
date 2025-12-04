@@ -31,7 +31,7 @@ Logger::Logger(bool debug, bool info, LogOutput output)
         const char* filename = "/var/log/flexaudio.log";
         m_f = fopen(filename, "w");
         assert(m_f != nullptr);
-        fprintf(stderr, "logging to %s\n", filename);
+        fprintf(stderr, "logging to {}\n", filename);
         break;
     }
     }
@@ -52,36 +52,8 @@ Logger::~Logger()
     }
 }
 
-
-void Logger::debug_msg(
-    uint32_t line, const char* file, const std::string msg, ...)
-{
-    va_list ap;
-    va_start(ap, msg);
-    log(line, file, Level::DEBUG, msg, ap);
-    va_end(ap);
-}
-
-void Logger::info_msg(
-    uint32_t line, const char* file, const std::string msg, ...)
-{
-    va_list ap;
-    va_start(ap, msg);
-    log(line, file, Level::INFO, msg, ap);
-    va_end(ap);
-}
-
-void Logger::error_msg(
-    uint32_t line, const char* file, const std::string msg, ...)
-{
-    va_list ap;
-    va_start(ap, msg);
-    log(line, file, Level::ERROR, msg, ap);
-    va_end(ap);
-}
-
 void Logger::log(uint32_t line, const char* file, Level level,
-    const std::string& msg, va_list& ap)
+    const std::string& msg)
 {
     const char* level_str = "";
     switch (level)
@@ -103,9 +75,9 @@ void Logger::log(uint32_t line, const char* file, Level level,
         std::gmtime(&time));
 
     char str[1024];
-    vsnprintf(str, sizeof(str), msg.c_str(), ap);
+    snprintf(str, sizeof(str), msg.c_str());
     fprintf(
-        m_f, "%s:%d: [%s] %s - %s\n", file, line, timeString, level_str, str);
+        m_f, "{}:{}: [{}] {} - {}\n", file, line, timeString, level_str, str);
 
     if (level == Level::ERROR)
     {

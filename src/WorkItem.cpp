@@ -59,7 +59,7 @@ void WorkItem::submit(const accept_callback_func_t& cb)
 void WorkItem::submit(
     const IPAddress& target, const connect_callback_func_t& cb)
 {
-    LOG_INFO(get_logger(), "connecting to %s",
+    LOG_INFO(get_logger(), "connecting to {}",
         target.to_human_readable_ip_string().c_str())
 
     m_connect_sock_len = target.size_sockaddr();

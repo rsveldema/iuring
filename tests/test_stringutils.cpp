@@ -23,13 +23,6 @@ TEST(TestStrings, test_trim)
     ASSERT_EQ(StringUtils::trim(" hi "), " hi");
 }
 
-TEST(TestStrings, test_sprintf)
-{
-    ASSERT_EQ(StringUtils::sprintf("%s", ""), "");
-    ASSERT_EQ(StringUtils::sprintf("%s", "hi"), "hi");
-    ASSERT_EQ(StringUtils::sprintf("%s %d", "hi", 42), "hi 42");
-}
-
 TEST(TestStrings, test_to_mdns_string)
 {
     const char expected_str[] = "\3abc\4bcde";

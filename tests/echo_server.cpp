@@ -21,8 +21,8 @@ void handle_new_connection(const iuring::AcceptResult& res,
 {
     auto socket = iuring::ISocket::create_impl(logger, res);
 
-    io->submit_recv(socket, [](const iuring::ReceivedMessage& msg) {
-        fprintf(stderr, "received: %s\n", msg.to_string().c_str());
+    io->submit_recv(socket, [&](const iuring::ReceivedMessage& msg) {
+        LOG_INFO(logger, "received: {}", msg.to_string().c_str());
         return iuring::ReceivePostAction::RE_SUBMIT;
     });
 }
@@ -31,7 +31,7 @@ void do_webserver(logging::ILogger& logger, const std::string& interface_name, b
 {
     auto port = iuring::SocketPortID::LOCAL_WEB_PORT;
 
-    LOG_INFO(logger, "going to do a simple websever\n");
+    LOG_INFO(logger, "going to do a simple webserver");
 
     auto socket = iuring::ISocket::create_impl(iuring::SocketType::IPV4_TCP,
             port, logger, iuring::SocketKind::SERVER_STREAM_SOCKET);
