@@ -2,17 +2,24 @@
 
 /**
  * @file IOUring.hpp
- * @brief Defines the IOUring class for asynchronous I/O operations using io_uring.
+ * @brief Defines the IOUring class for asynchronous I/O operations using
+ * io_uring.
  */
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE /* See feature_test_macros(7) */
+#endif
+
+#include <netdb.h>
 
 #include <liburing.h>
 
+#include <expected>
 #include <stack>
 
 #include <slogger/Error.hpp>
 
-#include "iuring/NetworkAdapter.hpp"
 #include "iuring/IOUringInterface.hpp"
+#include "iuring/NetworkAdapter.hpp"
 
 #include "WorkPool.hpp"
 
@@ -21,10 +28,12 @@ static constexpr size_t DEFAULT_QUEUE_SIZE = 64;
 
 namespace iuring
 {
-class IOUring : public IOUringInterface, public std::enable_shared_from_this<IOUring>
+class IOUring : public IOUringInterface,
+                public std::enable_shared_from_this<IOUring>
 {
 private:
-    IOUring(logging::ILogger& logger, NetworkAdapter& adapter, size_t queue_size);
+    IOUring(
+        logging::ILogger& logger, NetworkAdapter& adapter, size_t queue_size);
 
     IOUring(const IOUring&) = delete;
     IOUring& operator=(const IOUring&) = delete;
@@ -32,7 +41,8 @@ private:
     IOUring& operator=(IOUring&&) = delete;
 
 public:
-    static std::shared_ptr<IOUring> create(logging::ILogger& logger, NetworkAdapter& adapter, size_t queue_size = DEFAULT_QUEUE_SIZE);
+    static std::shared_ptr<IOUring> create(logging::ILogger& logger,
+        NetworkAdapter& adapter, size_t queue_size = DEFAULT_QUEUE_SIZE);
 
     ~IOUring();
 
@@ -40,10 +50,11 @@ public:
 
     error::Error poll_completion_queues() override;
 
-    std::shared_ptr<IWorkItem> submit_send(const std::shared_ptr<ISocket>& socket) override;
+    std::shared_ptr<IWorkItem> submit_send(
+        const std::shared_ptr<ISocket>& socket) override;
 
-    void submit_connect(const std::shared_ptr<ISocket>& socket, const IPAddress& target,
-        connect_callback_func_t handler) override;
+    void submit_connect(const std::shared_ptr<ISocket>& socket,
+        const IPAddress& target, connect_callback_func_t handler) override;
 
     void submit_accept(const std::shared_ptr<ISocket>& socket,
         accept_callback_func_t handler) override;
@@ -54,12 +65,19 @@ public:
     void submit_close(const std::shared_ptr<ISocket>& socket,
         close_callback_func_t handler) override;
 
+    void resolve_hostname(const std::string& hostname,
+        const resolve_hostname_callback_func_t& handler) override;
 
     /** @returns aa:bb:cc:dd:ee:ff
      */
     std::optional<MacAddress> get_my_mac_address() override
     {
         return m_adapter.get_my_mac_address();
+    }
+
+    NetworkAdapter& get_adapter()
+    {
+        return m_adapter;
     }
 
 private:
@@ -82,6 +100,46 @@ private:
 
     NetworkAdapter& m_adapter;
     WorkPool m_pool;
+
+    class RequestInfo
+    {
+    public:
+        RequestInfo() = delete;
+        RequestInfo(const RequestInfo&) = delete;
+        RequestInfo& operator=(const RequestInfo&) = delete;
+        RequestInfo& operator=(RequestInfo&&) = delete;
+
+ 
+        RequestInfo(RequestInfo&& arg)
+        {
+            hostname = std::move(arg.hostname);
+            handlers = std::move(arg.handlers);
+
+            request = arg.request;
+            all_requests[0] = request;
+
+            arg.request = nullptr;
+            arg.all_requests[0] = nullptr;
+        } 
+
+        RequestInfo(const std::string& _hostname)
+            : hostname(_hostname)
+        {
+        }
+
+    public:
+        std::string hostname;
+
+        // for getaddrinfo_a
+        gaicb* request = new gaicb{};
+        gaicb* all_requests[1] = { request };
+
+        // requests for this hostname:
+        std::vector<IOUring::resolve_hostname_callback_func_t> handlers;
+    };
+
+    std::vector<RequestInfo> m_hostname_DNS_requests;
+
 
     logging::ILogger& get_logger()
     {
@@ -111,6 +169,10 @@ private:
         assert(buf_shift > 0);
         return buffer_base + (idx << buf_shift);
     }
+
+
+    static void sig_notifier_hostname_resolve(sigval_t sv);
+    void trigger_hostname_resolve_callbacks(void* ptr);
 
     void recycle_buffer(int idx);
 

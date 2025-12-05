@@ -1,5 +1,11 @@
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE /* See feature_test_macros(7) */
+#endif
+
 #include <ifaddrs.h>
+#include <netdb.h>
 #include <sys/mman.h>
+
 
 #include <thread>
 
@@ -206,7 +212,7 @@ void IOUring::submit_all_requests()
     }
     else
     {
-        //fprintf(stderr, "{} jobs submitted\n", ret);
+        // fprintf(stderr, "{} jobs submitted\n", ret);
     }
 }
 
@@ -268,8 +274,8 @@ void IOUring::submit(IWorkItem& _item)
 
         assert(item.m_connect_sock_len == sizeof(*sa));
 
-        LOG_INFO(get_logger(),
-            "prep-connect: fd={} (port {})", fd, htons(sa->sin_port));
+        LOG_INFO(get_logger(), "prep-connect: fd={} (port {})", fd,
+            htons(sa->sin_port));
 
         io_uring_prep_connect(sqe, fd,
             (struct sockaddr*) &item.m_buffer_for_uring,
@@ -285,7 +291,8 @@ void IOUring::submit(IWorkItem& _item)
         if (item.is_stream())
         {
             int flags = 0;
-            LOG_INFO(get_logger(), " register rcv: {}", item.get_socket()->get_fd());
+            LOG_INFO(
+                get_logger(), " register rcv: {}", item.get_socket()->get_fd());
             io_uring_prep_recv(sqe, item.get_socket()->get_fd(),
                 nullptr, // buffer selected automatically from buffer queue
                 buffer_size(), flags);
@@ -325,10 +332,8 @@ void IOUring::submit(IWorkItem& _item)
         int flags = 0;
         const auto& sp = item.get_raw_send_packet();
 
-        LOG_INFO(get_logger(),
-            "sending {} bytes ({})",
-            sp.size(),
-            (char*)sp.data());
+        LOG_INFO(get_logger(), "sending {} bytes ({})", sp.size(),
+            (char*) sp.data());
         io_uring_prep_send(sqe, fd, sp.data(), sp.size(), flags);
 
         if (item.next_request_should_wait_for_this_request())
@@ -375,8 +380,8 @@ void WorkItem::init_send_msg()
 
     {
         const uint8_t congestion_notification = 0;
-        const uint8_t tos = static_cast<std::underlying_type_t<dscp_t>>(m_params.dscp)
-                << 2 |
+        const uint8_t tos =
+            static_cast<std::underlying_type_t<dscp_t>>(m_params.dscp) << 2 |
             congestion_notification;
         const int32_t ttl =
             static_cast<std::underlying_type_t<timetolive_t>>(m_params.ttl);
@@ -425,7 +430,6 @@ void WorkItem::init_send_msg()
     }
     // LOG_DEBUG(get_logger(), "submitting send: {} bytes\n", size);
 }
-
 
 
 void IOUring::call_close_callback(
@@ -744,7 +748,7 @@ error::Error IOUring::poll_completion_queues()
     switch (success)
     {
     case 0:
-        //fprintf(stderr, "peek successful!\n");
+        // fprintf(stderr, "peek successful!\n");
 
         call_callback_and_free_work_item_id(cqe);
         io_uring_cq_advance(&m_ring, 1);
@@ -804,5 +808,119 @@ void IOUring::submit_close(
         socket, shared_from_this(), handler, "close-of-socket");
 }
 
+
+std::shared_ptr<IOUring> self;
+
+void IOUring::sig_notifier_hostname_resolve(sigval_t sv)
+{
+    void* ptr = sv.sival_ptr;
+
+    assert(self != nullptr);
+    self->trigger_hostname_resolve_callbacks(ptr);
+}
+
+namespace
+{
+    std::vector<IPAddress> convert_addresses(const addrinfo* res)
+    {
+        std::vector<IPAddress> addresses;
+
+        for (const auto* rp = res; rp != nullptr; rp = rp->ai_next)
+        {
+            if (rp->ai_family == AF_INET)
+            {
+                sockaddr_in* sa = (sockaddr_in*) rp->ai_addr;
+                addresses.push_back(IPAddress(*sa));
+            }
+            else if (rp->ai_family == AF_INET6)
+            {
+                sockaddr_in6* sa = (sockaddr_in6*) rp->ai_addr;
+                addresses.push_back(IPAddress(*sa));
+            }
+        }
+
+        return addresses;
+    }
+} // namespace
+
+void IOUring::trigger_hostname_resolve_callbacks(void* ptr)
+{
+    for (auto& it : m_hostname_DNS_requests)
+    {
+        if (!it.request)
+        {
+            LOG_INFO(get_logger(),
+                "hostname resolve request already handled for {}",
+                it.hostname.c_str());
+            continue;
+        }
+
+        if (it.request != ptr)
+        {
+            LOG_INFO(get_logger(),
+                "hostname resolve request not matching for {}",
+                it.hostname.c_str());
+            continue;
+        }
+
+        resolve_hostname_arg_t result;
+
+        if (it.request->ar_result == nullptr)
+        {
+            LOG_ERROR(
+                get_logger(), "hostname resolve failed for {}", it.hostname);
+            result = std::unexpected(error::Error::HOSTNAME_RESOLVE_FAILED);
+        }
+        else
+        {
+            result = convert_addresses(it.request->ar_result);
+            freeaddrinfo(it.request->ar_result);
+            it.request->ar_result = nullptr;
+
+            free(it.request);
+            it.request = nullptr;
+        }
+
+        for (auto& handler : it.handlers)
+        {
+            handler(result);
+        }
+    }
+}
+
+void IOUring::resolve_hostname(
+    const std::string& hostname, const resolve_hostname_callback_func_t& handler)
+{
+    self = shared_from_this();
+
+
+    for (auto& req : m_hostname_DNS_requests)
+    {
+        if (req.hostname == hostname)
+        {
+            LOG_INFO(get_logger(), "duplicate hostname resolve request for {}",
+                hostname.c_str());
+            req.handlers.push_back(handler);
+            return;
+        }
+    }
+
+
+    auto& req = m_hostname_DNS_requests.emplace_back(hostname);
+
+    static sigevent sig{};
+
+    req.request->ar_name = hostname.c_str();
+    req.request->ar_service = nullptr;
+    req.request->ar_request = nullptr;
+    req.request->ar_result = nullptr;
+
+    sig.sigev_notify = SIGEV_THREAD;
+    sig.sigev_value.sival_ptr = req.request;
+    sig.sigev_notify_function = sig_notifier_hostname_resolve;
+    sig.sigev_notify_attributes = nullptr;
+
+    getaddrinfo_a(GAI_NOWAIT, req.all_requests, 1, &sig);
+}
 
 } // namespace iuring

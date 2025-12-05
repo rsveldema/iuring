@@ -22,16 +22,16 @@ void handle_new_connection(const iuring::AcceptResult& res,
     auto socket = iuring::ISocket::create_impl(logger, res);
 
     io->submit_recv(socket, [&](const iuring::ReceivedMessage& msg) {
-        LOG_INFO(logger, "received: {}", msg.to_string().c_str());
+        LOG_INFO(logger, "received: {}", msg.to_string());
         return iuring::ReceivePostAction::RE_SUBMIT;
     });
 }
 
-void do_webserver(logging::ILogger& logger, const std::string& interface_name, bool tune)
+void do_echo_server(logging::ILogger& logger, const std::string& interface_name, bool tune)
 {
     auto port = iuring::SocketPortID::LOCAL_WEB_PORT;
 
-    LOG_INFO(logger, "going to do a simple webserver");
+    LOG_INFO(logger, "going to do a simple echo server");
 
     auto socket = iuring::ISocket::create_impl(iuring::SocketType::IPV4_TCP,
             port, logger, iuring::SocketKind::SERVER_STREAM_SOCKET);
@@ -78,6 +78,6 @@ int main(int argc, char** argv)
         }
     }
 
-    server::do_webserver(logger, interface_name, tune);
+    server::do_echo_server(logger, interface_name, tune);
     return 0;
 }

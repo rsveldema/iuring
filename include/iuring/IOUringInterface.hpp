@@ -6,6 +6,9 @@
  */
 
 #include <memory>
+#include <expected>
+#include <functional>
+#include <vector>
 
 #include <slogger/ILogger.hpp>
 #include <slogger/Error.hpp>
@@ -24,6 +27,11 @@ class IOUringInterface
 public:
     virtual ~IOUringInterface() {}
 
+    using resolve_hostname_arg_t = std::expected<std::vector<IPAddress>, error::Error>;
+    using resolve_hostname_callback_func_t = std::function<void(
+        const resolve_hostname_arg_t& result)>;
+
+
     static std::shared_ptr<IOUringInterface> create_impl(logging::ILogger& logger, NetworkAdapter& adapter);
 
     virtual error::Error init() = 0;
@@ -31,6 +39,10 @@ public:
     virtual std::optional<MacAddress> get_my_mac_address() = 0;
 
     virtual error::Error poll_completion_queues() = 0;
+    
+    virtual void resolve_hostname(const std::string& hostname, 
+        const resolve_hostname_callback_func_t& handler) = 0;
+
 
     virtual void submit_connect(const std::shared_ptr<ISocket>& socket,
         const IPAddress& target, connect_callback_func_t handler) = 0;

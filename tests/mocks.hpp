@@ -59,6 +59,9 @@ namespace mocks
             (const std::shared_ptr<ISocket>& socket,
                 close_callback_func_t handler),
             (override));
+
+        MOCK_METHOD(void, resolve_hostname, (const std::string& hostname, 
+            const resolve_hostname_callback_func_t& handler), (override));
     };
 } // namespace mocks
 } // namespace iuring
