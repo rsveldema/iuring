@@ -28,15 +28,16 @@ enum class SocketType
 
 enum class SocketPortID : u_int16_t
 {
-    UNKNOWN = 0xffff,
-
     UNENCRYPTED_WEB_PORT = 80,
-    ENCRYPTED_WEB_PORT = 443,
-
-    LOCAL_WEB_PORT = 8080,
 
     PTP_PORT_EVENT = 319,
     PTP_PORT_GENERAL = 320,
+
+    ENCRYPTED_WEB_PORT = 443,
+
+    LAST_PRIVILEDGED_PORT_ID = 1024,
+
+    LOCAL_WEB_PORT = 8080,
 
     // Session Announcement Protocol
     SAP_PORT_EVENT = 9875,
@@ -44,7 +45,9 @@ enum class SocketPortID : u_int16_t
     // rtp audio bcast
     RTP_AUDIO_PORT = 5004,
 
-    MDNS_PORT=5353
+    MDNS_PORT=5353,
+
+    UNKNOWN = 0xffff,
 };
 
 enum class timetolive_t : uint8_t
@@ -108,7 +111,7 @@ struct std::formatter<iuring::SocketPortID> {
     constexpr auto parse(std::format_parse_context& ctx) {
         return ctx.begin();
     }
-    
+
     auto format(iuring::SocketPortID c, std::format_context& ctx) const {
         return std::format_to(ctx.out(), "{}", static_cast<uint16_t>(c));
     }

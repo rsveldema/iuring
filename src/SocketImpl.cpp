@@ -281,6 +281,10 @@ void SocketImpl::local_bind(SocketPortID port_id)
     {
         perror("bind failed for local_bind");
         LOG_ERROR(get_logger(), "failed to bind to port {}, exiting (fd={})", port_id, get_fd());
+        if (port_id < SocketPortID::LAST_PRIVILEDGED_PORT_ID)
+        {
+            LOG_ERROR(get_logger(), "are you using 'sudo'?");
+        }
         abort();
     }
 
