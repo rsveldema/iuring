@@ -22,6 +22,8 @@ public:
 
     void tune();
 
+    const std::string& get_hostname() const { return m_hostname; }
+
     void set_interface_ip4(const std::string& ip)
     {
         m_interface_ip4 = ip;
@@ -50,6 +52,7 @@ public:
     }
 
 private:
+    std::string m_hostname;
     logging::ILogger& m_logger;
 
     std::optional<std::string> m_interface_ip4;

@@ -16,6 +16,14 @@ void NetworkAdapter::init()
 {
     retrieve_interface_ip();
     tune();
+
+    char hostname[256];
+    if (gethostname(hostname, sizeof(hostname)) != 0)
+    {
+        LOG_ERROR(get_logger(), "gethostname() failed");
+        abort();
+    }
+    m_hostname = std::string(hostname);
 }
 
 
