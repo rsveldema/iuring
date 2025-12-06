@@ -90,6 +90,23 @@ public:
         abort();
     }
 
+    SocketPortID get_port() const
+    {
+        if (auto* a = get_ipv4())
+        {
+            const auto p = htons(static_cast<uint16_t>(a->sin_port));
+            return static_cast<SocketPortID>(p);
+        }
+
+        if (auto* a = get_ipv6())
+        {
+            const auto p = htons(static_cast<uint16_t>(a->sin6_port));
+            return static_cast<SocketPortID>(p);
+        }
+        abort();
+    }
+
+
     bool valid() const
     {
         if (get_ipv4())
