@@ -58,8 +58,6 @@ namespace iuring::mocks
     {
     public:
         MOCK_METHOD(error::Error, init, (), (override));
-        MOCK_METHOD(
-            std::optional<MacAddress>, get_my_mac_address, (), (override));
         MOCK_METHOD(error::Error, poll_completion_queues, (), (override));
         MOCK_METHOD(void, submit_connect,
             (const std::shared_ptr<ISocket>& socket, const IPAddress& target,

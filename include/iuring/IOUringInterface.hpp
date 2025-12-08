@@ -36,11 +36,9 @@ public:
 
     virtual error::Error init() = 0;
 
-    virtual std::optional<MacAddress> get_my_mac_address() = 0;
-
     virtual error::Error poll_completion_queues() = 0;
-    
-    virtual void resolve_hostname(const std::string& hostname, 
+
+    virtual void resolve_hostname(const std::string& hostname,
         const resolve_hostname_callback_func_t& handler) = 0;
 
 

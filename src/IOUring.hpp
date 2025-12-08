@@ -68,13 +68,6 @@ public:
     void resolve_hostname(const std::string& hostname,
         const resolve_hostname_callback_func_t& handler) override;
 
-    /** @returns aa:bb:cc:dd:ee:ff
-     */
-    std::optional<MacAddress> get_my_mac_address() override
-    {
-        return m_adapter.get_my_mac_address();
-    }
-
     NetworkAdapter& get_adapter()
     {
         return m_adapter;
@@ -109,7 +102,7 @@ private:
         RequestInfo& operator=(const RequestInfo&) = delete;
         RequestInfo& operator=(RequestInfo&&) = delete;
 
- 
+
         RequestInfo(RequestInfo&& arg)
         {
             hostname = std::move(arg.hostname);
@@ -120,7 +113,7 @@ private:
 
             arg.request = nullptr;
             arg.all_requests[0] = nullptr;
-        } 
+        }
 
         RequestInfo(const std::string& _hostname)
             : hostname(_hostname)
