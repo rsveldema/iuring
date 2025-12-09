@@ -39,7 +39,7 @@ void handle_new_connection(const std::shared_ptr<iuring::IOUringInterface>& io,
     const std::shared_ptr<iuring::ISocket>& socket,
     logging::ILogger& logger)
 {
-    auto wi = io->submit_send(socket);
+    auto wi = io->ackuire_send_workitem(socket);
     auto& pkt = wi->get_send_packet();
 
     pkt.append("GET /posts/1 HTTP/1.1\r\n");

@@ -809,7 +809,7 @@ void IOUring::submit_recv(
         socket, shared_from_this(), handler, "read-from-socket");
 }
 
-std::shared_ptr<IWorkItem> IOUring::submit_send(
+std::shared_ptr<IWorkItem> IOUring::ackuire_send_workitem(
     const std::shared_ptr<ISocket>& socket)
 {
     assert(m_initialized);

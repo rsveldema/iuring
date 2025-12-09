@@ -64,7 +64,7 @@ public:
      *      - Then you call submit on the work-item.
      *      - The WorkItem::submit() method then has the callback arg.
      */
-    virtual std::shared_ptr<IWorkItem> submit_send(
+    virtual std::shared_ptr<IWorkItem> ackuire_send_workitem(
         const std::shared_ptr<ISocket>& socket) = 0;
 
     /** used to submit the submit_sent returned

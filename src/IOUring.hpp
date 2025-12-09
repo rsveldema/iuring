@@ -50,7 +50,7 @@ public:
 
     error::Error poll_completion_queues() override;
 
-    std::shared_ptr<IWorkItem> submit_send(
+    std::shared_ptr<IWorkItem> ackuire_send_workitem(
         const std::shared_ptr<ISocket>& socket) override;
 
     void submit_connect(const std::shared_ptr<ISocket>& socket,

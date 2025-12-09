@@ -71,7 +71,7 @@ namespace iuring::mocks
             (const std::shared_ptr<ISocket>& socket,
                 recv_callback_func_t handler),
             (override));
-        MOCK_METHOD(std::shared_ptr<IWorkItem>, submit_send,
+        MOCK_METHOD(std::shared_ptr<IWorkItem>, ackuire_send_workitem,
             (const std::shared_ptr<ISocket>& socket), (override));
         MOCK_METHOD(void, submit, (IWorkItem & item), (override));
         MOCK_METHOD(void, submit_close,
