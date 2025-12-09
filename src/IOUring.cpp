@@ -519,7 +519,7 @@ void IOUring::call_accept_callback(
 
     const int fd = cqe->res;
 
-    LOG_INFO(get_logger(), " XQE - res = {}", fd);
+    LOG_DEBUG(get_logger(), " XQE - res = {}", fd);
 
     const iuring::IPAddress addr(
         work_item->m_buffer_for_uring, work_item->m_accept_sock_len);
