@@ -63,7 +63,7 @@ void do_echo_server(logging::ILogger& logger, const std::string& interface_name,
 
 int main(int argc, char** argv)
 {
-    logging::Logger logger(true, true, logging::LogOutput::CONSOLE);
+    logging::DirectConsoleLogger logger(true, true, logging::LogOutput::CONSOLE);
 
     const std::string interface_name = "eth0";
     bool tune = true;

@@ -14,7 +14,7 @@ namespace Tests
 class TestWorkPool : public testing::Test
 {
 public:
-    logging::Logger logger{ true, true, logging::LogOutput::CONSOLE };
+    logging::DirectConsoleLogger logger{ true, true, logging::LogOutput::CONSOLE };
     iuring::WorkPool wp{ logger };
 
     std::shared_ptr<iuring::mocks::Socket> socket =

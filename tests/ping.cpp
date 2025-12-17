@@ -87,7 +87,7 @@ void do_http_ping(const iuring::IPAddress& ping_addr, logging::ILogger& logger,
 
 int main(int argc, char** argv)
 {
-    logging::Logger logger(true, true, logging::LogOutput::CONSOLE);
+    logging::DirectConsoleLogger logger(true, true, logging::LogOutput::CONSOLE);
 
     const std::string interface_name = "eth0";
     bool tune = true;
