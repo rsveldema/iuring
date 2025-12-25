@@ -5,6 +5,7 @@
 
 #include <slogger/TimeUtils.hpp>
 #include <slogger/Logger.hpp>
+#include <slogger/DefaultClockTimer.hpp>
 
 using namespace std::chrono_literals;
 
@@ -75,7 +76,9 @@ void do_http_ping(const iuring::IPAddress& ping_addr, logging::ILogger& logger,
             handle_new_connection(io, socket, logger);
         });
 
-    time_utils::Timeout timeout(20s);
+    time_utils::DefaultClockTimer timer;
+
+    time_utils::Timeout timeout(timer, 20s);
     while (!connection_has_been_closed)
     {
         assert(!timeout.elapsed());
