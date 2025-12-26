@@ -38,6 +38,9 @@ public:
 
     void dump_info();
 
+    void send(const std::shared_ptr<iuring::IOUringInterface>& io,
+        const std::string& reply_msg, const iuring::send_callback_func_t &cb) override;
+
     int mcast_bind() override;
 
     void join_multicast_group(const std::string& ip_address,

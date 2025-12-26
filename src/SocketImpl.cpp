@@ -10,6 +10,7 @@
 
 #include "SocketImpl.hpp"
 #include "WorkItem.hpp"
+#include "iuring/IOUringInterface.hpp"
 
 
 namespace iuring
@@ -20,6 +21,35 @@ std::shared_ptr<ISocket> ISocket::create_impl(
     return SocketImpl::create(logger, new_conn);
 }
 
+void ISocket::push_encrypted_data(const iuring::ReceivedMessage& data)
+{
+    if (data.is_empty())
+    {
+        return;
+    }
+    m_encrypted_data.push_range(data);
+    assert(! m_encrypted_data.empty());
+}
+
+
+size_t ISocket::copy_out_encrypted_data(uint8_t* buf, size_t len)
+{
+    size_t copied = 0;
+    while (!m_encrypted_data.empty())
+    {
+        if (copied == len)
+        {
+            break;
+        }
+        buf[copied] = m_encrypted_data.front();
+        copied++;
+        m_encrypted_data.pop();
+    }
+
+    LOG_DEBUG(get_logger(), "|||||||||||| receive-cb encrypted data: {} bytes, wanted {}",
+        copied, len);
+    return copied;
+}
 
 std::shared_ptr<ISocket> ISocket::create_impl(SocketType type,
     SocketPortID port, logging::ILogger& logger, SocketKind kind)
@@ -123,7 +153,7 @@ SocketImpl::SocketImpl(SocketType type, SocketPortID port,
     switch (kind)
     {
     case SocketKind::UNICAST_CLIENT_SOCKET: {
-        //local_bind(static_cast<SocketPortID>(9090));
+        // local_bind(static_cast<SocketPortID>(9090));
 
         int val = 1;
         int ret =
@@ -198,6 +228,16 @@ void SocketImpl::dump_info()
     const auto addr = sa->sin_addr;
     LOG_DEBUG(get_logger(), "DOUBLE CHECK -----> port bound to {}: {}", port,
         inet_ntoa(addr));
+}
+
+
+void SocketImpl::send(const std::shared_ptr<iuring::IOUringInterface>& io,
+    const std::string& reply_msg, const iuring::send_callback_func_t& cb)
+{
+    auto wi = io->ackuire_send_workitem(this->shared_from_this());
+    auto& pkt = wi->get_send_packet();
+    pkt.append(reply_msg);
+    wi->submit_stream_data(cb);
 }
 
 
@@ -280,7 +320,8 @@ void SocketImpl::local_bind(SocketPortID port_id)
     if (int ret = ::bind(get_fd(), (sockaddr*) &addr, sizeof(addr)); ret < 0)
     {
         perror("bind failed for local_bind");
-        LOG_ERROR(get_logger(), "failed to bind to port {}, exiting (fd={})", port_id, get_fd());
+        LOG_ERROR(get_logger(), "failed to bind to port {}, exiting (fd={})",
+            port_id, get_fd());
         if (port_id < SocketPortID::LAST_PRIVILEDGED_PORT_ID)
         {
             LOG_ERROR(get_logger(), "are you using 'sudo'?");

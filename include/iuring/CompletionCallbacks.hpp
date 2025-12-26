@@ -1,5 +1,8 @@
 #pragma once
 
+#include <functional>
+#include <string>
+
 /**
  * @file CompletionCallbacks.hpp
  * @brief Defines callback function types for network operations.

@@ -27,6 +27,11 @@ public:
         return m_data;
     }
 
+    bool is_empty() const
+    {
+        return get_size() == 0;
+    }
+
     size_t get_size() const
     {
         return m_size;
