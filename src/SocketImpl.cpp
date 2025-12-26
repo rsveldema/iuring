@@ -21,35 +21,6 @@ std::shared_ptr<ISocket> ISocket::create_impl(
     return SocketImpl::create(logger, new_conn);
 }
 
-void ISocket::push_encrypted_data(const iuring::ReceivedMessage& data)
-{
-    if (data.is_empty())
-    {
-        return;
-    }
-    m_encrypted_data.push_range(data);
-    assert(! m_encrypted_data.empty());
-}
-
-
-size_t ISocket::copy_out_encrypted_data(uint8_t* buf, size_t len)
-{
-    size_t copied = 0;
-    while (!m_encrypted_data.empty())
-    {
-        if (copied == len)
-        {
-            break;
-        }
-        buf[copied] = m_encrypted_data.front();
-        copied++;
-        m_encrypted_data.pop();
-    }
-
-    LOG_DEBUG(get_logger(), "|||||||||||| receive-cb encrypted data: {} bytes, wanted {}",
-        copied, len);
-    return copied;
-}
 
 std::shared_ptr<ISocket> ISocket::create_impl(SocketType type,
     SocketPortID port, logging::ILogger& logger, SocketKind kind)
