@@ -18,7 +18,7 @@ enum class SocketPortID : u_int16_t
 
     MDNS_PORT = 5353,
 
-    LOCAL_WEB_PORT = 8080,
+    LOCAL_WEB_PORT =  8443,
 
     // Session Announcement Protocol
     SAP_PORT_EVENT = 9875,

@@ -641,6 +641,9 @@ ReceivePostAction IOUring::call_recv_callback(
                 "NB: This requires a kernel version >= 6.0 (EINVAL)");
             break;
         }
+
+        case EAI_INTR:
+            return ReceivePostAction::RE_SUBMIT;
         }
         abort();
         return ReceivePostAction::RE_SUBMIT;
