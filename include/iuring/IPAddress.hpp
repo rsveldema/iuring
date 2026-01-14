@@ -263,8 +263,19 @@ public:
     static in_addr string_to_ipv4_address(
         const std::string& _ip_address, logging::ILogger& logger);
 
+    std::optional<uint8_t> get_subnet_mask() const
+    {
+        return m_subnet_mask;
+    }
+
+    void set_subnet_mask(uint8_t mask)
+    {
+        m_subnet_mask = mask;
+    }
+
 private:
     std::optional<sockaddr_in> m_in4;
+    std::optional<uint8_t> m_subnet_mask;
     std::optional<sockaddr_in6> m_in6;
 };
 
