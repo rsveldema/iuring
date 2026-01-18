@@ -37,6 +37,11 @@ public:
     {
         // fd is not used for mocked sockets; use -1 as placeholder
         auto s = std::make_shared<Socket>(type, port, logger, kind, -1);
+        
+        // Set up default behavior for commonly called methods
+        ON_CALL(*s, join_multicast_group(testing::_, testing::_))
+            .WillByDefault(testing::Return());
+        
         created_sockets.push_back( s );
         return s;
     }
@@ -49,6 +54,11 @@ public:
         const auto type = SocketType::IPV4_TCP;
         auto s = std::make_shared<Socket>(
             type, port, logger, SocketKind::SERVER_STREAM_SOCKET, res.m_new_fd);
+        
+        // Set up default behavior for commonly called methods
+        ON_CALL(*s, join_multicast_group(testing::_, testing::_))
+            .WillByDefault(testing::Return());
+        
         created_sockets.push_back(s);
         return s;
     }

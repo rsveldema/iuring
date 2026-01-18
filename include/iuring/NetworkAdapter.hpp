@@ -26,6 +26,13 @@ public:
 
     void tune();
 
+    void set_interface_name(const std::string& interface_name)
+    {
+        m_interface_name = interface_name;
+        LOG_INFO(get_logger(), "interface name set to {}", interface_name);
+    }
+
+
     const std::string& get_hostname() const
     {
         return m_hostname;
